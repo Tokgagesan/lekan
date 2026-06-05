@@ -1,0 +1,4 @@
+import {createClient} from '@/lib/supabase-server';import type {Car} from '@/lib/types';
+export async function getPublicCars():Promise<Car[]>{const s=await createClient();const{data,error}=await s.from('cars').select('*,car_images(*)').in('status',['available','reserved']).order('featured',{ascending:false}).order('created_at',{ascending:false});if(error)throw error;return(data||[])as Car[]}
+export async function getAdminCars():Promise<Car[]>{const s=await createClient();const{data,error}=await s.from('cars').select('*,car_images(*)').order('created_at',{ascending:false});if(error)throw error;return(data||[])as Car[]}
+export async function getCarBySlug(slug:string):Promise<Car|null>{const s=await createClient();const{data,error}=await s.from('cars').select('*,car_images(*)').eq('slug',slug).single();if(error)return null;return data as Car}

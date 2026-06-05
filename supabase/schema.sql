@@ -1,0 +1,13 @@
+create extension if not exists "pgcrypto";
+create table if not exists public.cars(id uuid primary key default gen_random_uuid(),slug text unique not null,make text not null,model text not null,year integer not null,price bigint not null,mileage integer,transmission text,fuel_type text,body_type text,color text,condition text,location text,description text,status text not null default 'available' check(status in('available','reserved','sold','hidden')),featured boolean not null default false,created_at timestamptz not null default now(),updated_at timestamptz not null default now());
+create table if not exists public.car_images(id uuid primary key default gen_random_uuid(),car_id uuid not null references public.cars(id) on delete cascade,image_url text not null,storage_path text,sort_order integer not null default 0,created_at timestamptz not null default now());
+alter table public.cars enable row level security;alter table public.car_images enable row level security;
+create policy "public visible cars" on public.cars for select using(status in('available','reserved','sold'));
+create policy "public images" on public.car_images for select using(true);
+create policy "auth manage cars" on public.cars for all to authenticated using(true) with check(true);
+create policy "auth manage images" on public.car_images for all to authenticated using(true) with check(true);
+insert into storage.buckets(id,name,public) values('car-images','car-images',true) on conflict(id) do nothing;
+create policy "public storage read" on storage.objects for select using(bucket_id='car-images');
+create policy "auth storage insert" on storage.objects for insert to authenticated with check(bucket_id='car-images');
+create policy "auth storage update" on storage.objects for update to authenticated using(bucket_id='car-images');
+create policy "auth storage delete" on storage.objects for delete to authenticated using(bucket_id='car-images');
